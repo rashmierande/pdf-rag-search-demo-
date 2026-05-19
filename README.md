@@ -1,41 +1,117 @@
-<!-- @format -->
-# Welcome to The AI Guild 🚀
+# PDF RAG Search Demo
 
-**This code is a part of a module in our vibrant AI community 🚀[Join the AI Guild Community](https://bit.ly/ai-guild-join), where like-minded entrepreneurs and programmers come together to build real-world AI-based solutions.**
+Hands-on Retrieval-Augmented Generation (RAG) demo for querying financial PDFs (e.g., annual reports). The project loads and chunks a PDF, builds a Chroma vector store with sentence-transformer embeddings, and retrieves the most relevant text chunks for natural-language questions.
 
-### What is The AI Guild?
-The AI Guild is a collaborative community designed for developers, tech enthusiasts, and entrepreneurs who want to **build practical AI tools** and solutions. Whether you’re just starting or looking to level up your skills, this is the place to dive deeper into AI in a supportive, hands-on environment.
+## What this project does
 
-### Why Join Us?
-- **Collaborate with Like-Minded Builders**: Work alongside a community of individuals passionate about AI, sharing ideas and solving real-world problems together.
-- **Access to Exclusive Resources**: Gain entry to our Code & Template Vault, a collection of ready-to-use code snippets, templates, and AI projects.
-- **Guided Learning Paths**: Follow structured paths, from AI Basics for Builders to advanced classes like AI Solutions Lab, designed to help you apply your knowledge.
-- **Weekly Live Calls & Q&A**: Get direct support, feedback, and guidance during live sessions with the community.
-- **Real-World AI Projects**: Work on projects that make an impact, learn from others, and showcase your work.
+- Extracts text from a PDF using `pypdf`.
+- Splits the text into manageable chunks with `RecursiveCharacterTextSplitter`.
+- Builds an in-memory Chroma collection with sentence-transformer embeddings.
+- Runs semantic search over the chunks to answer questions like  
+  _"What was the total revenue for the year?"_
 
-### Success Stories
-Here’s what some of our members are saying:
-- **"Joining The AI Guild has accelerated my learning. I’ve already built my first AI chatbot with the help of the community!"**
-- **"The live calls and feedback have been game-changers. I’ve implemented AI automation in my business, saving hours each week."**
+This repo focuses on a clean, modular RAG core that’s easy to understand and extend.
 
-### Who is This For?
-If you’re eager to:
-- Build AI tools that solve real problems
-- Collaborate and learn from experienced AI practitioners
-- Stay up-to-date with the latest in AI development
-- Turn your coding skills into actionable solutions
+## Project structure
 
-Then **The AI Guild** is the perfect fit for you.
+Key files:
 
-### Frequently Asked Questions
-- **Q: Do I need to be an expert to join?**
-  - **A:** Not at all! The AI Guild is designed for all skill levels, from beginners to advanced developers.
-- **Q: Will I get personalized support?**
-  - **A:** Yes! You’ll have access to live Q&A sessions and direct feedback on your projects.
-- **Q: What kind of projects can I work on?**
-  - **A:** You can start with small projects like chatbots and automation tools, and progress to more advanced AI solutions tailored to your interests.
+- `pdf_utils.py`  
+  - `load_and_chunk_pdf(path, chunk_size=1000, chunk_overlap=0)`  
+  - Loads a PDF, extracts page text, and returns a list of text chunks.
 
-### How to Get Started
-Want to dive deeper and get the full experience? 🚀[Join the AI Guild Community](https://bit.ly/ai-guild-join) and unlock all the benefits of our growing community.
+- `vector_store_utils.py`  
+  - `build_chroma_collection(chunks, name="demo-collection")`  
+    - Creates a Chroma client, builds a collection, and indexes the chunks.  
+  - `search_collection(collection, query, k=5)`  
+    - Runs a semantic query against the collection and returns the top‑k chunks.
 
-We look forward to seeing what you’ll build with us!
+You can compose these functions to go from raw PDF → chunks → vector store → search.
+
+## Quick start
+
+1. **Create and activate a virtual environment**
+
+```bash
+cd /Users/rashmi/projects/advanced-rag-techniques
+
+python -m venv .venv
+source .venv/bin/activate  # on macOS/Linux
+# .venv\Scripts\activate   # on Windows
+```
+
+2. **Install dependencies**
+
+```bash
+python -m pip install pypdf langchain-text-splitters chromadb
+```
+
+3. **Add a PDF**
+
+Place a PDF under the `data/` folder, for example:
+
+```text
+data/microsoft-annual-report.pdf
+```
+
+4. **Test the PDF loading and chunking**
+
+```bash
+python pdf_utils.py
+```
+
+You should see the total number of chunks and a preview of the first few.
+
+5. **Build the vector store and run a query**
+
+```bash
+python vector_store_utils.py
+```
+
+This will:
+
+- Load and chunk the PDF.
+- Build a Chroma collection.
+- Run a sample query such as:
+
+```text
+What was the total revenue for the year?
+```
+
+and print the top matching chunks.
+
+## Minimal example (from Python)
+
+You can also use the pipeline from a Python shell or notebook:
+
+```python
+from pdf_utils import load_and_chunk_pdf
+from vector_store_utils import build_chroma_collection, search_collection
+
+pdf_path = "data/microsoft-annual-report.pdf"
+
+# 1. PDF -> chunks
+chunks = load_and_chunk_pdf(pdf_path)
+
+# 2. chunks -> Chroma collection
+collection = build_chroma_collection(chunks, name="microsoft-demo")
+
+# 3. query -> top-k chunks
+query = "What was the total revenue for the year?"
+docs = search_collection(collection, query, k=3)
+
+print("Query:", query)
+for i, doc in enumerate(docs, start=1):
+    print(f"\nResult {i}:")
+    print(doc[:400])
+```
+
+## Next steps / extensions
+
+This project is designed to be extended with:
+
+- Query expansion using OpenAI (multi-query RAG).
+- Visualization of embeddings using UMAP + matplotlib.
+- Evaluation of retrieval quality with LLM-based metrics (e.g., RAG testing).
+
+It is intentionally kept small and modular to serve as a clear demo of the RAG basics over PDFs.
