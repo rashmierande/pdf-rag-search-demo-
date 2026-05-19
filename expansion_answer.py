@@ -1,3 +1,5 @@
+from numpy.ma import count
+
 from helper_utils import project_embeddings, word_wrap
 from pypdf import PdfReader
 import os
@@ -29,7 +31,7 @@ pdf_texts = [text for text in pdf_texts if text]
 # split the text into smaller chunks
 
 
-from langchain.text_splitter import (
+from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
     SentenceTransformersTokenTextSplitter,
 )
@@ -69,15 +71,15 @@ ids = [str(i) for i in range(len(token_split_texts))]
 chroma_collection.add(ids=ids, documents=token_split_texts)
 chroma_collection.count()
 
-query = "What was the total revenue for the year?"
 
+query = "What was the total revenue for the year?"
 
 results = chroma_collection.query(query_texts=[query], n_results=5)
 retrieved_documents = results["documents"][0]
 
-# for document in retrieved_documents:
-#     print(word_wrap(document))
-#     print("\n")
+for document in retrieved_documents:
+    print(word_wrap(document))
+    print("\n")
 
 
 def augment_query_generated(query, model="gpt-3.5-turbo"):
